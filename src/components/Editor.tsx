@@ -1,14 +1,11 @@
 import { Range, Editor as SlateEditor, Transforms } from "slate";
-import {
-  Editable,
-  ReactEditor,
-  Slate,
-} from "slate-react";
+import { Editable, ReactEditor, Slate } from "slate-react";
 import type { Descendant } from "slate";
 import { useEditor } from "../hooks/useEditor";
-import { EDITOR_INITIAL_STATE, SlateBlockTypes } from "../constants/editor";
-import {
+import { EDITOR_INITIAL_STATE, editorPrefixes } from "../constants/editor";
+import React, {
   CSSProperties,
+  KeyboardEvent,
   useCallback,
   useEffect,
   useMemo,
@@ -17,32 +14,54 @@ import {
 } from "react";
 import { Portal } from "./Portal";
 import { useClickOutside } from "../hooks/useClickOutside";
+import { BaseEditorElement } from "./elements";
+
+import "./index.css";
+
+type InputValue<T> = T & { prefix: keyof typeof editorPrefixes };
+type InputPrefixType = "@" | "#";
 
 type EditorProps = {
   initialValue?: Descendant[] | null;
   handleOnChange?: (data: Descendant[]) => void;
   uniqueHashTags?: boolean;
-  hashTags?: { key: string; label: string }[];
-  hashTagItems?: { key: string; label: string }[];
-  handleSearch?: (search: string) => void;
+  uniqueHashMentions?: boolean;
+  menuItems?: { key: string; label: string }[];
+  collectedItems?: { key: string; label: string; prefix: string }[];
+  handleSearch?: (search: string, prefix: string) => void;
   hashTagEnabled?: boolean;
-  isHasTagSearching?: boolean;
+  isProcessing?: boolean;
   searchContainerClassName?: string;
   searchContainerStyle?: CSSProperties;
   searchMenuItemClassName?: string;
+  emptySearchMenuItemClassName?: string;
   searchMenuItemStyle?: CSSProperties;
-  handleHashtagSelected?: (data: { key: string; label: string }) => void;
+  handleHashtagSelected?: (data: {
+    key: string;
+    label: string;
+    prefix: string;
+  }) => boolean | void | null;
   elementClassName?: string;
   placeholder?: string;
+  editorClassname?: string;
+  editorId?: string;
+  hashTagPrefix?: string;
+  mentionPrefix?: string;
+  loadingComponent?: React.ReactNode;
+  defaultLoadingText?: string;
 };
 
-export const Editor = (props: EditorProps) => {
-  const { editor } = useEditor() as any;
+export const Editor = ({
+  hashTagPrefix = "#",
+  mentionPrefix = "@",
+  ...props
+}: EditorProps) => {
+  const { editor } = useEditor();
 
   const ref = useRef<HTMLDivElement>(null);
   const [target, setTarget] = useState<Range | null>();
   const [index, setIndex] = useState(0);
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState<"#" | "@">("#");
 
   useClickOutside(ref, () => {
     setTarget(null);
@@ -68,39 +87,15 @@ export const Editor = (props: EditorProps) => {
     return <span {...attributes}>{children}</span>;
   };
 
-  const Element = (props: any) => {
-    const { attributes, children, element } = props;
-    switch (element.type) {
-      case SlateBlockTypes.Hashtag:
-        return <Hashtag {...props} />;
-      default:
-        return <p {...attributes}>{children}</p>;
-    }
-  };
-
-  const Hashtag = ({ attributes, children, element }: any) => {
-    const className = props.elementClassName;
-
-    return (
-      <span
-        {...attributes}
-        contentEditable={false}
-        data-cy={`hashtag-${element.value.label.replace(" ", "-")}`}
-        className={className}
-      >
-        #{element.value.label}
-        {children}
-      </span>
-    );
-  };
-
-  const renderElement = (elProps: any) => <Element {...elProps} />;
+  const renderElement = (elProps: any) => (
+    <BaseEditorElement className={props.elementClassName} {...elProps} />
+  );
   const renderLeaf = useCallback((props: any) => <Leaf {...props} />, []);
 
-  const chars = useMemo(() => {
-    const items = props.hashTagItems || [];
+  const searchItemValues = useMemo(() => {
+    const items = props.menuItems || [];
 
-    return items.length === 0 && !props.isHasTagSearching
+    return items.length === 0 && !props.isProcessing
       ? [
           {
             key: "is-new",
@@ -108,10 +103,10 @@ export const Editor = (props: EditorProps) => {
           },
         ]
       : items;
-  }, [props.hashTagItems, props.isHasTagSearching, search]);
+  }, [props.menuItems, props.isProcessing, search]);
 
   useEffect(() => {
-    if (target && chars.length > 0) {
+    if (target && searchItemValues.length > 0) {
       const el = ref.current;
       const domRange = ReactEditor.toDOMRange(editor, target);
       const rect = domRange.getBoundingClientRect();
@@ -120,7 +115,7 @@ export const Editor = (props: EditorProps) => {
         el.style.left = `${rect.left + window.pageXOffset}px`;
       }
     }
-  }, [chars.length, editor, index, search, target]);
+  }, [searchItemValues.length, editor, index, search, target]);
 
   function editorOnChange(data: Descendant[]) {
     const { selection } = editor;
@@ -131,66 +126,78 @@ export const Editor = (props: EditorProps) => {
       const before = wordBefore && SlateEditor.before(editor, wordBefore);
       const beforeRange = before && SlateEditor.range(editor, before, start);
       const beforeText = beforeRange && SlateEditor.string(editor, beforeRange);
-      const beforeMatch = beforeText && beforeText.match(/^#(\w+)$/);
+      const beforeMatch = beforeText && beforeText.match(/^(#|@)(\w+)$/);
       const after = SlateEditor.after(editor, start);
       const afterRange = SlateEditor.range(editor, start, after);
       const afterText = SlateEditor.string(editor, afterRange);
       const afterMatch = afterText.match(/^(\s|$)/);
 
+      if (beforeMatch) {
+        setSearch((beforeMatch?.[1] as InputPrefixType) ?? undefined);
+      }
+
       if (beforeMatch && afterMatch) {
         setTarget(beforeRange);
-        setSearch(beforeMatch[1]);
         setIndex(0);
-        props.handleSearch?.(beforeMatch[1]);
+        props.handleSearch?.(beforeMatch[2], beforeMatch[1]);
         return;
       }
     }
-    props.handleOnChange?.(data)
+
+    props.handleOnChange?.(data);
     setTarget(null);
   }
 
-  const insertHashtag = useCallback(
-    (editor: any, value: any) => {
+  const insertSelectedEntry = useCallback(
+    (editor: any, value: InputValue<(typeof searchItemValues)[0]>) => {
       if (!value) return;
-      // check if exists
-      const exists =
-        (props.hashTags || [])?.filter(
-          ({ label }) => value.label.toLowerCase() === label.toLowerCase()
-        ).length > 0;
 
-      if (exists && props.uniqueHashTags) return;
+      const { prefix } = value;
 
-      const hashtag = {
-        type: SlateBlockTypes.Hashtag,
+      if (props.uniqueHashTags && search === hashTagPrefix) {
+        const exists =
+          (props.collectedItems || []).filter(
+            ({ label }) =>
+              value.label?.toLowerCase() === label.toLowerCase() &&
+              value.prefix === prefix
+          ).length > 0;
+
+        if (exists) return;
+      }
+
+      const payload = {
+        type: editorPrefixes[prefix],
         value,
         children: [{ text: "" }],
       };
-      Transforms.insertNodes(editor, hashtag);
+
+      Transforms.insertNodes(editor, payload, { select: true });
       Transforms.move(editor, { edge: "end" });
-      setIndex(0)
+      console.log(ReactEditor.isFocused(editor));
+      setIndex(0);
     },
-    [props.hashTags, props.uniqueHashTags]
+    [props.menuItems, props.collectedItems, props.uniqueHashTags]
   );
 
   const onKeyDown = useCallback(
-    (event: any) => {
-      if (target && chars.length > 0) {
+    (event: KeyboardEvent) => {
+      if (target && searchItemValues.length > 0) {
         switch (event.key) {
           case "ArrowDown":
             event.preventDefault();
-            const prevIndex = index >= chars.length - 1 ? 0 : index + 1;
+            const prevIndex = index >= searchItemValues.length - 1 ? 0 : index + 1;
             setIndex(prevIndex);
             break;
           case "ArrowUp":
             event.preventDefault();
-            const nextIndex = index <= 0 ? chars.length - 1 : index - 1;
+            const nextIndex = index <= 0 ? searchItemValues.length - 1 : index - 1;
             setIndex(nextIndex);
             break;
           case "Tab":
           case "Enter":
             event.preventDefault();
             Transforms.select(editor, target);
-            insertHashtag(editor, chars[index]);
+            insertSelectedEntry(editor, { prefix: search, ...searchItemValues[index] });
             setTarget(null);
             break;
           case "Escape":
@@ -200,16 +207,25 @@ export const Editor = (props: EditorProps) => {
         }
       }
     },
-    [chars, editor, index, insertHashtag, target]
+    [searchItemValues, editor, index, insertSelectedEntry, target]
   );
 
-  function handleClick(char: (typeof chars)[0]) {
-    if (!target) return;
-    ReactEditor.blur(editor);
-    Transforms.select(editor, target);
-    insertHashtag(editor, char);
+  function handleClick(value: InputValue<(typeof searchItemValues)[0]>) {
+    if (!target || typeof value.prefix !== "string") return;
+
+    const sendValueAction = props.handleHashtagSelected?.(value);
+
+    if (sendValueAction !== null && sendValueAction !== false) {
+      ReactEditor.blur(editor);
+      Transforms.select(editor, target);
+      insertSelectedEntry(editor, value);
+
+      setTarget(null);
+      return;
+    }
+
+    ReactEditor.focus(editor);
     setTarget(null);
-    props.handleHashtagSelected?.(char);
   }
 
   return (
@@ -219,14 +235,18 @@ export const Editor = (props: EditorProps) => {
       onChange={editorOnChange}
     >
       <Editable
+        id={props.editorId || undefined}
+        className={props.editorClassname || "SlateMention__editorClassname"}
         spellCheck
         autoFocus
         onKeyDown={onKeyDown}
         renderElement={renderElement}
         renderLeaf={renderLeaf}
-        placeholder={props.placeholder || "Provide description for your ad, you can add hastags also e.g. #clothes"}
+        placeholder={
+          props.placeholder || "Enter hashtag with '#' or mention with '@'"
+        }
       />
-      {(target || props.isHasTagSearching) && (
+      {target && (
         <Portal>
           <div
             ref={ref}
@@ -236,26 +256,45 @@ export const Editor = (props: EditorProps) => {
               position: "absolute",
               ...props.searchContainerStyle,
             }}
-            className={props.searchContainerClassName || ""}
-            data-cy="hashtags-portal"
+            className={
+              props.searchContainerClassName ||
+              "SlateMention__searchContainerClassName"
+            }
+            data-cy="SlateMention__hashtags-portal"
           >
-            {props.isHasTagSearching ? (
-              <h1>Loading</h1>
-            ) : target ? (
-              chars.map((char) => (
+            {props.isProcessing ? (
+              props.loadingComponent || (
+                <div className="SlateMention__searchContainerLoadingClassName">
+                  {props.defaultLoadingText || "Loading"}
+                </div>
+              )
+            ) : target && searchItemValues.length > 0 ? (
+              searchItemValues.map((item) => (
                 <div
-                  key={char.key}
+                  key={item.key}
                   onClick={(evt) => {
                     evt.preventDefault();
-                    handleClick(char);
+                    handleClick({ ...item, prefix: search });
                   }}
-                  className={props.searchMenuItemClassName || ""}
+                  className={
+                    props.searchMenuItemClassName ||
+                    "SlateMention__searchMenuItemClassName"
+                  }
                   style={props.searchMenuItemStyle}
                 >
-                  {char.label}
+                  {item.label}
                 </div>
               ))
-            ) : null}
+            ) : (
+              <p
+                className={
+                  props.emptySearchMenuItemClassName ||
+                  "SlateMention__emptySearchMenuItemClassName"
+                }
+              >
+                No options available
+              </p>
+            )}
           </div>
         </Portal>
       )}

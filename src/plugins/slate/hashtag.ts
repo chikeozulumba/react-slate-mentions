@@ -5,15 +5,15 @@ export const applyHashtagConfiguration = (editor: Editor) => {
   const { isInline, isVoid, markableVoid } = editor;
 
   editor.isInline = (element) => {
-    return element.type === SlateBlockTypes.Hashtag ? true : isInline(element);
+    return [SlateBlockTypes.Mention, SlateBlockTypes.Hashtag].includes(element.type) ? true : isInline(element);
   };
 
   editor.isVoid = (element) => {
-    return element.type === SlateBlockTypes.Hashtag ? true : isVoid(element);
+    return [SlateBlockTypes.Mention, SlateBlockTypes.Hashtag].includes(element.type) ? true : isVoid(element);
   };
 
   editor.markableVoid = (element) => {
-    return element.type === SlateBlockTypes.Hashtag || markableVoid(element);
+    return [SlateBlockTypes.Mention, SlateBlockTypes.Hashtag].includes(element.type) || markableVoid(element);
   };
 
   return editor;

@@ -5,7 +5,7 @@ import type { MutableRefObject } from "react";
  * Hook that alerts clicks outside of the passed ref
  */
 export function useClickOutside(
-  ref: MutableRefObject<HTMLDivElement | Element | null>,
+  ref: MutableRefObject<Element | null>,
   callback?: () => void
 ) {
   useEffect(() => {
@@ -13,6 +13,7 @@ export function useClickOutside(
      * Run if clicked on outside of element
      */
     function handleClickOutside(event: any) {
+      event.target
       if (ref.current && !ref.current.contains(event.target)) {
         callback?.();
       }

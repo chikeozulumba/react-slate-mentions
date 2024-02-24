@@ -1,6 +1,6 @@
 {
   "name": "react-slate-mentions",
-  "private": true,
+  "private": false,
   "version": "0.0.0",
   "type": "module",
   "scripts": {
@@ -9,6 +9,24 @@
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview"
   },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/chikeozulumba/react-slate-mentions.git"
+  },
+  "keywords": [
+    "react",
+    "slate",
+    "hashtags",
+    "mentions",
+    "react-component",
+    "react-slate",
+    "react-slate-mentions"
+  ],
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/chikeozulumba/react-slate-mentions/issues"
+  },
+  "homepage": "https://github.com/chikeozulumba/react-slate-mentions",
   "dependencies": {
     "nanoid": "^5.0.6",
     "react": "^18.2.0",
