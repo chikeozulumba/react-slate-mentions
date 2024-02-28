@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Editor } from "../src/components/Editor";
+import { MentionEditor as Editor } from "../src/components/Editor";
 import { EDITOR_INITIAL_STATE } from "../src/constants";
 
 const items = [

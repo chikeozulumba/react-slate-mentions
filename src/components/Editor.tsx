@@ -52,7 +52,7 @@ type EditorProps = {
   isReadOnly?: boolean
 };
 
-export const Editor = ({
+export const MentionEditor = ({
   hashTagPrefix = "#",
   mentionPrefix = "@",
   isReadOnly = false,
