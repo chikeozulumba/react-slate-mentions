@@ -21,3 +21,22 @@ test("loads and displays the <Hashtag /> component", async () => {
   render(component);
   expect(screen.getByRole("button")).toHaveTextContent("#Hashtag Test");
 });
+
+test("loads and displays the <Hashtag /> component without className", async () => {
+  const component = (
+    <Hashtag
+      attributes={{
+        role: "button"
+      }}
+      element={{
+        value: {
+          key: "test-hashtag",
+          label: "Hashtag Test"
+        },
+      }}
+    />
+  );
+  // ARRANGE
+  render(component);
+  expect(screen.getByRole("button")).toHaveTextContent("#Hashtag Test");
+});
