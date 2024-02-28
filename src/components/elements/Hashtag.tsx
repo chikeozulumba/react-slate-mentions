@@ -8,8 +8,7 @@ export const Hashtag = ({ attributes, element, children, className = '' }: any) 
       data-cy={`hashtag-${element.value.label.replace(" ", "-")}`}
       className={className}
     >
-      #{element.value.label}
-      {children}
+      {children}#{element.value.label}
     </span>
   );
 };

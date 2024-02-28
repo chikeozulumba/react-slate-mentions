@@ -1,4 +1,4 @@
-import { Element, Range, Transforms, Node, Editor } from "slate";
+import { Element, Range, Transforms, Node, Editor, Location } from "slate";
 import { ReactEditor } from "slate-react";
 
 /**
@@ -212,6 +212,31 @@ export const applyBaseConfiguration = (editor: any) => {
       },
     });
   };
+
+  editor.refocus = () => {
+    const block = Editor.above(editor, {
+      match: (n) => Editor.isBlock(editor, n),
+    });
+
+    const path = block ? block[1] : [];
+    ReactEditor.focus(editor);
+    // @ts-ignore
+    Transforms.setSelection(editor, path);
+  }
+
+  editor.moveToEnd = (location?: Location) => {
+    const block = Editor.above(editor, {
+      match: n => Editor.isBlock(editor, n),
+    });
+
+    if (!block) return;
+
+    const [, blockPath] = block;
+
+    const endBlockPath = location || Editor.end(editor, blockPath);
+    console.log(endBlockPath)
+    Transforms.select(editor, endBlockPath);
+  }
 
   return editor;
 };

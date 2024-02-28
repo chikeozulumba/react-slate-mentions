@@ -62,6 +62,7 @@ export const Editor = ({
 
   const ref = useRef<HTMLDivElement>(null);
   const [target, setTarget] = useState<Range | null>();
+  const [afterTarget, setAfterTarget] = useState<Range | null>();
   const [index, setIndex] = useState(0);
   const [search, setSearch] = useState<"#" | "@">("#");
 
@@ -99,11 +100,11 @@ export const Editor = ({
 
     return items.length === 0 && !props.isProcessing
       ? [
-          {
-            key: "is-new",
-            label: search,
-          },
-        ]
+        {
+          key: "is-new",
+          label: search,
+        },
+      ]
       : items;
   }, [props.menuItems, props.isProcessing, search]);
 
@@ -120,6 +121,9 @@ export const Editor = ({
   }, [searchItemValues.length, editor, index, search, target]);
 
   function editorOnChange(data: Descendant[]) {
+    if (isReadOnly) return;
+
+
     const { selection } = editor;
 
     if (selection && Range.isCollapsed(selection) && props.hashTagEnabled) {
@@ -134,12 +138,15 @@ export const Editor = ({
       const afterText = SlateEditor.string(editor, afterRange);
       const afterMatch = afterText.match(/^(\s|$)/);
 
+      // console.log(beforeRange, afterRange)
+
       if (beforeMatch) {
         setSearch((beforeMatch?.[1] as InputPrefixType) ?? undefined);
       }
 
       if (beforeMatch && afterMatch) {
         setTarget(beforeRange);
+        setAfterTarget(afterTarget);
         setIndex(0);
         props.handleSearch?.(beforeMatch[2], beforeMatch[1]);
         return;
@@ -174,13 +181,24 @@ export const Editor = ({
       };
 
       Transforms.insertNodes(editor, payload, { select: true });
-      Transforms.move(editor, { edge: "end" });
-      console.log(ReactEditor.isFocused(editor));
+
+      if (afterTarget) {
+        ReactEditor.focus(editor);
+
+        //TODO const [firstPos = 0, lastPos = 0]: number[] = (target.focus?.path) || []
+        editor.moveToEnd({ ...afterTarget.focus, offset: 0 });
+      }
+
       setIndex(0);
     },
-    [props.menuItems, props.collectedItems, props.uniqueHashTags]
+    [props.menuItems, props.collectedItems, props.uniqueHashTags, target]
   );
 
+  /**
+   *
+   *
+   * @param {KeyboardEvent} event
+   */
   const onKeyDown = useCallback(
     (event: KeyboardEvent) => {
       if (target && searchItemValues.length > 0) {
