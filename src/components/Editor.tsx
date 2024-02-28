@@ -49,11 +49,13 @@ type EditorProps = {
   mentionPrefix?: string;
   loadingComponent?: React.ReactNode;
   defaultLoadingText?: string;
+  isReadOnly?: boolean
 };
 
 export const Editor = ({
   hashTagPrefix = "#",
   mentionPrefix = "@",
+  isReadOnly = false,
   ...props
 }: EditorProps) => {
   const { editor } = useEditor();
@@ -245,6 +247,7 @@ export const Editor = ({
         placeholder={
           props.placeholder || "Enter hashtag with '#' or mention with '@'"
         }
+        readOnly={isReadOnly}
       />
       {target && (
         <Portal>
