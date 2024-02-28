@@ -37,7 +37,7 @@ export const applyBaseConfiguration = (editor: any) => {
     return ReactEditor.isFocused(editor);
   };
 
-  /**
+  /**`
    * Unwraps any node of `type` within the current selection.
    */
   editor.unwrapNode = (type: string) => {
