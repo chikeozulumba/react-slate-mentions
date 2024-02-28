@@ -3,6 +3,14 @@
   "private": false,
   "version": "0.0.0",
   "type": "module",
+  "main": "./dist/react-slate-mentions.umd.js",
+  "module": "./dist/react-slate-mentions.es.js",
+  "exports": {
+    ".": {
+      "import": "./dist/react-slate-mentions.es.js",
+      "require": "./dist/react-slate-mentions.umd.js"
+    }
+  },
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",

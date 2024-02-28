@@ -1,4 +1,4 @@
-import { Element, Range, Transforms, Node, Editor, Location } from "slate";
+import { Range, Transforms, Node, Editor, Location, BaseElement } from "slate";
 import { ReactEditor } from "slate-react";
 
 /**
@@ -42,7 +42,7 @@ export const applyBaseConfiguration = (editor: any) => {
    */
   editor.unwrapNode = (type: string) => {
     Transforms.unwrapNodes(editor, {
-      match: (n: Element) => n.type === type,
+      match: (n: any) => n.type === type,
     } as any);
   };
 
@@ -144,7 +144,7 @@ export const applyBaseConfiguration = (editor: any) => {
    */
   editor.findNodesByType = (type: any) => {
     const list = Editor.nodes(editor, {
-      match: (n: Element) => n.type === type,
+      match: (n: any) => n.type === type,
       at: [],
     } as any);
     // List in editor with path and node
@@ -215,7 +215,7 @@ export const applyBaseConfiguration = (editor: any) => {
 
   editor.refocus = () => {
     const block = Editor.above(editor, {
-      match: (n) => Editor.isBlock(editor, n),
+      match: (n) => Editor.isBlock(editor, n as BaseElement),
     });
 
     const path = block ? block[1] : [];
@@ -226,7 +226,7 @@ export const applyBaseConfiguration = (editor: any) => {
 
   editor.moveToEnd = (location?: Location) => {
     const block = Editor.above(editor, {
-      match: n => Editor.isBlock(editor, n),
+      match: (n) => Editor.isBlock(editor, n as BaseElement),
     });
 
     if (!block) return;
