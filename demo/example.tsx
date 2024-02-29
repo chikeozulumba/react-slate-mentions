@@ -19,8 +19,8 @@ interface Props {
   elementClassName?: string;
   editorClassname?: string;
   editorId?: string;
-  uniqueHashTags?: boolean;
-  uniqueHashMentions?: boolean;
+  allowUniqueHashTags?: boolean;
+  allowUniqueMentions?: boolean;
 }
 
 function SlateMentionExample({
@@ -33,7 +33,7 @@ function SlateMentionExample({
     { key: string; label: string; prefix: string }[]
   >([]);
 
-  function handleHashtagSelected(data: {
+  function handleItemsCollected(data: {
     key: string;
     label: string;
     prefix: string;
@@ -71,11 +71,11 @@ function SlateMentionExample({
       elementClassName={
         props.elementClassName || "SlateMention__elementClassName"
       }
-      handleHashtagSelected={handleHashtagSelected}
+      handleItemsCollected={handleItemsCollected}
       handleOnChange={handleOnChange}
       initialValue={initialValue}
-      uniqueHashTags={props.uniqueHashTags}
-      uniqueHashMentions={props.uniqueHashMentions}
+      allowUniqueHashTags={props.allowUniqueHashTags}
+      allowUniqueMentions={props.allowUniqueMentions}
       loadingComponent={
         <h1 style={{ fontSize: "12px" }}>Please wait for me</h1>
       }

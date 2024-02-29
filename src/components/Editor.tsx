@@ -18,14 +18,14 @@ import { BaseEditorElement } from "./elements";
 
 import "./index.css";
 
-type InputValue<T> = T & { prefix: keyof typeof editorPrefixes };
+type InputValue<T> = T & { prefix: keyof typeof editorPrefixes | string };
 type InputPrefixType = "@" | "#";
 
 type EditorProps = {
   initialValue?: Descendant[] | null;
   handleOnChange?: (data: Descendant[]) => void;
-  uniqueHashTags?: boolean;
-  uniqueHashMentions?: boolean;
+  allowUniqueHashTags?: boolean;
+  allowUniqueMentions?: boolean;
   menuItems?: { key: string; label: string }[];
   collectedItems?: { key: string; label: string; prefix: string }[];
   handleSearch?: (search: string, prefix: string) => void;
@@ -36,7 +36,7 @@ type EditorProps = {
   searchMenuItemClassName?: string;
   emptySearchMenuItemClassName?: string;
   searchMenuItemStyle?: CSSProperties;
-  handleHashtagSelected?: (data: {
+  handleItemsCollected?: (data: {
     key: string;
     label: string;
     prefix: string;
@@ -64,7 +64,7 @@ export const MentionEditor = ({
   const [target, setTarget] = useState<Range | null>();
   const [afterTarget, setAfterTarget] = useState<Range | null>();
   const [index, setIndex] = useState(0);
-  const [search, setSearch] = useState<"#" | "@">("#");
+  const [search, setSearch] = useState<typeof mentionPrefix & typeof hashTagPrefix>("#");
 
   useClickOutside(ref, () => {
     setTarget(null);
@@ -163,12 +163,12 @@ export const MentionEditor = ({
 
       const { prefix } = value;
 
-      if (props.uniqueHashTags && search === hashTagPrefix) {
+      if ((props.allowUniqueHashTags || props.allowUniqueMentions) && search === hashTagPrefix) {
         const exists =
           (props.collectedItems || []).filter(
-            ({ label }) =>
+            ({ label, prefix: p }) =>
               value.label?.toLowerCase() === label.toLowerCase() &&
-              value.prefix === prefix
+              value.prefix === prefix && prefix !== p
           ).length > 0;
 
         if (exists) return;
@@ -191,7 +191,7 @@ export const MentionEditor = ({
 
       setIndex(0);
     },
-    [props.menuItems, props.collectedItems, props.uniqueHashTags, target]
+    [props.menuItems, props.collectedItems, props.allowUniqueHashTags, props.allowUniqueMentions, target]
   );
 
   /**
@@ -233,7 +233,7 @@ export const MentionEditor = ({
   function handleClick(value: InputValue<(typeof searchItemValues)[0]>) {
     if (!target || typeof value.prefix !== "string") return;
 
-    const sendValueAction = props.handleHashtagSelected?.(value);
+    const sendValueAction = props.handleItemsCollected?.(value);
 
     if (sendValueAction !== null && sendValueAction !== false) {
       ReactEditor.blur(editor);

@@ -1,30 +1,73 @@
-# React + TypeScript + Vite
+# React Slate Mentions
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+React component for enabling hashtags and mentions while editing. This is enabled while using either ``# or `@` preceeding the text to be inserted.
 
-Currently, two official plugins are available:
+## Getting started
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+Install the  `react-slate-mentions` using the command below:
 
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type aware lint rules:
-
-- Configure the top-level `parserOptions` property like this:
-
-```js
-export default {
-  // other rules...
-  parserOptions: {
-    ecmaVersion: 'latest',
-    sourceType: 'module',
-    project: ['./tsconfig.json', './tsconfig.node.json'],
-    tsconfigRootDir: __dirname,
-  },
-}
+```shell
+npm install react-slate-mentions
 ```
 
-- Replace `plugin:@typescript-eslint/recommended` to `plugin:@typescript-eslint/recommended-type-checked` or `plugin:@typescript-eslint/strict-type-checked`
-- Optionally add `plugin:@typescript-eslint/stylistic-type-checked`
-- Install [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react) and add `plugin:react/recommended` & `plugin:react/jsx-runtime` to the `extends` list
+## Usage
+
+Import the component to be used using the following:
+
+```tsx
+import { MentionEditor } from 'react-slate-mentions'
+```
+
+Optionally, you can also import the base css styles.
+
+```tsx
+import 'react-slate-mentions/dis/style.css'
+```
+
+Integrate the component into your project using the example below
+
+```jsx
+<MentionEditor
+  editorClassname={...}
+  editorId={...}
+  placeholder={...}
+  hashTagEnabled
+  menuItems={...}
+  collectedItems={...}
+  isProcessing={...}
+  handleSearch={...}
+  searchContainerClassName={...}
+  searchMenuItemClassName={...}
+  elementClassName={...}
+  handleItemsCollected={...}
+  handleOnChange={...}
+  initialValue={...}
+  allowUniqueHashTags={...}
+  allowUniqueMentions={...}
+  loadingComponent={...}
+  isReadOnly={...}
+/>
+```
+
+## Component Props
+
+The following are the available props for the component and their defaults
+
+|           Name           |                           Type                           | Required |                      Description                      |   Default   |
+| :----------------------: | :------------------------------------------------------: | :------: | :---------------------------------------------------: | :---------: |
+|         editorId         |                         `string`                         |  false   |                       Editor ID                       | `undefined` |
+|       placeholder        |                         `string`                         |  false   |                Editor placeholder text                | `undefined` |
+|     editorClassname      |                         `string`                         |  false   |                   Editor classname                    | `undefined` |
+|        menuItems         |          `Array<{ key: string; value: string}>`          |  false   |          List of dropdown items per trigger           | `undefined` |
+|      collectedItems      | `Array<{ key: string; value: string; prefix?: string }>` |  false   |       List of dropdown items for unique sorting       | `undefined` |
+|       isProcessing       |                        `boolean`                         |  false   |             State for pensing operations              | `undefined` |
+|       handleSearch       |                        `Function`                        |  false   | Handle preparation of dropdown items in this function | `undefined` |
+| searchContainerClassName |                         `string`                         |  false   |          Classname for editor menu container          | `undefined` |
+| searchMenuItemClassName  |                         `string`                         |  false   |       Classname for editor dropdown menu items        | `undefined` |
+|     elementClassName     |                         `string`                         |  false   |      Classname for editor elements during render      | `undefined` |
+|   handleItemsCollected   |                        `Function`                        |  false   |       Function for returning newly added items        | `undefined` |
+|      handleOnChange      |                        `Function`                        |  false   |         Function for getting editor contents          | `undefined` |
+|   allowUniqueHashTags    |                        `boolean`                         |  false   |      Boolean for allowing/denying unique entries      | `undefined` |
+|   allowUniqueMentions    |                        `boolean`                         |  false   |      Boolean for allowing/denying unique entries      | `undefined` |
+|     loadingComponent     |                    `React.ReactNode`                     |  false   |  Component for displaying no result in the dropdown   | `undefined` |
+|        isReadOnly        |                        `boolean`                         |  false   |       Boolean for triggering edit/no-edit mode        | `undefined` |
