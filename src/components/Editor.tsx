@@ -191,7 +191,7 @@ export const MentionEditor = ({
 
       setIndex(0);
     },
-    [props.menuItems, props.collectedItems, props.allowUniqueHashTags, props.allowUniqueMentions, target]
+    [props.collectedItems, props.allowUniqueHashTags, props.allowUniqueMentions, afterTarget, hashTagPrefix, search]
   );
 
   /**
@@ -205,13 +205,11 @@ export const MentionEditor = ({
         switch (event.key) {
           case "ArrowDown":
             event.preventDefault();
-            const prevIndex = index >= searchItemValues.length - 1 ? 0 : index + 1;
-            setIndex(prevIndex);
+            setIndex(index >= searchItemValues.length - 1 ? 0 : index + 1);
             break;
           case "ArrowUp":
             event.preventDefault();
-            const nextIndex = index <= 0 ? searchItemValues.length - 1 : index - 1;
-            setIndex(nextIndex);
+            setIndex(index <= 0 ? searchItemValues.length - 1 : index - 1);
             break;
           case "Tab":
           case "Enter":
@@ -227,7 +225,7 @@ export const MentionEditor = ({
         }
       }
     },
-    [searchItemValues, editor, index, insertSelectedEntry, target]
+    [searchItemValues, editor, index, insertSelectedEntry, target, search]
   );
 
   function handleClick(value: InputValue<(typeof searchItemValues)[0]>) {

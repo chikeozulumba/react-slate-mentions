@@ -220,7 +220,7 @@ export const applyBaseConfiguration = (editor: any) => {
 
     const path = block ? block[1] : [];
     ReactEditor.focus(editor);
-    // @ts-ignore
+    // @ts-expect-error
     Transforms.setSelection(editor, path);
   }
 
